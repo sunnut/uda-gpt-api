@@ -2,6 +2,47 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3001;
 
+app.get("/", (_req, res) => res.type('html').send(html));
+
+const WHITE_LIST = [
+  'http://localhost:8080',
+  'https://pages.git.autodesk.com'
+];
+
+app.get('/getToken', async (req, res) => {
+  const origin = req.headers.origin;
+  
+  if (!WHITE_LIST.includes(origin)) {
+    return res.status(403).send({success: false, error: 'Origin not allowed'});
+  }
+  
+  const params = new URLSearchParams({
+    client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
+    client_secret: 'xLC8Q~dEh3NcAWNCkm89AbCvk73idIg5-8-zXbVF',
+    grant_type: 'client_credentials',
+    scope: 'https://cognitiveservices.azure.com/.default',
+  });
+
+  fetch(
+    'https://login.microsoftonline.com/autodesk.onmicrosoft.com/oauth2/v2.0/token',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params
+    }
+  ).then((response) => response.json())
+  .then((data) => {
+    res.send({
+      success: true,
+      token: data
+    });
+  }).catch((error) => {
+    res.send({success: false, error});
+  });
+});
+
 app.get("/", (req, res) => res.type('html').send(html));
 
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
