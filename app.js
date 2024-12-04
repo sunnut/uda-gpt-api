@@ -6,8 +6,7 @@ app.get("/", (_req, res) => res.type('html').send(html));
 
 const WHITE_LIST = [
   'http://localhost:8080',
-  'https://pages.git.autodesk.com',
-  'https://uda-gpt-api.onrender.com'
+  'https://pages.git.autodesk.com'
 ];
 
 app.get('/getToken', async (req, res) => {
