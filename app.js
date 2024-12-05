@@ -1,4 +1,4 @@
-var CryptoJS = require("crypto-js");
+const CryptoJS = require("crypto-js");
 const express = require("express");
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -63,6 +63,23 @@ app.options('/adsk/uda/openai', cors({
   credentials: true,
 }));
 
+const encryptedValue = (plaintext) => {
+  try {
+    let encryptionKey = 'udagpt_key';
+    const iv1 = CryptoJS.lib.WordArray.random(16);
+    const ciphertext = CryptoJS.AES.encrypt(plaintext, encryptionKey, {
+      iv: iv1,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    const encryptedData = iv1.toString(CryptoJS.enc.Base64) + '|' + ciphertext.toString();
+    return encryptedData;
+  } catch (_ex) {
+    return '';
+  }
+};
+
 app.post('/adsk/uda/openai', cors(), (req, res) => {
   const authheader = req.headers.authorization;
 
@@ -107,14 +124,13 @@ app.post('/adsk/uda/openai', cors(), (req, res) => {
     } else {
       res.send({
         success: true,
-        answer: CryptoJS.AES.encrypt(data.choices[0].message.content, 'udagpt_key').toString(),
+        answer: encryptedValue(data.choices[0].message.content, 'udagpt_key'),
       });
     }
   }).catch((error) => {
     res.send({success: false, error});
   });
 });
-
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
 server.keepAliveTimeout = 120 * 1000;
