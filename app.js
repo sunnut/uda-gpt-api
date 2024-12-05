@@ -26,12 +26,6 @@ const corsOptionsDelegate = (req, callback) => {
 };
 
 app.get('/getToken', cors(corsOptionsDelegate), async (req, res) => {
-  const origin = req.headers.origin;
-  
-  if (!WHITE_LIST.includes(origin)) {
-    return res.status(403).send({success: false, error: 'Origin not allowed'});
-  }
-
   const params = new URLSearchParams({
     client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
     client_secret: 'xLC8Q~dEh3NcAWNCkm89AbCvk73idIg5-8-zXbVF',
