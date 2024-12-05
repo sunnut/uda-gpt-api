@@ -1,3 +1,4 @@
+var CryptoJS = require("crypto-js");
 const express = require("express");
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -13,19 +14,11 @@ const allowlist = [
   'https://pages.git.autodesk.com'
 ];
 
-const corsOptionsDelegate = (req, callback) => {
-  let corsOptions;
-
-  if (allowlist.indexOf(req.headers.origin) !== -1) {
-    corsOptions = { origin: true };
-  } else {
-    corsOptions = { origin: false };
+app.get('/getToken', cors(), (req, res) => {
+  if (!allowlist.includes(req.headers.origin)) {
+    return res.status(403).send({success: false, error: 'Unauthorized domain'});
   }
 
-  callback(null, corsOptions);
-};
-
-app.get('/getToken', cors(corsOptionsDelegate), (_req, res) => {
   const params = new URLSearchParams({
     client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
     client_secret: 'xLC8Q~dEh3NcAWNCkm89AbCvk73idIg5-8-zXbVF',
@@ -114,7 +107,7 @@ app.post('/adsk/uda/openai', cors(), (req, res) => {
     } else {
       res.send({
         success: true,
-        answer: data.choices[0].message.content
+        answer: CryptoJS.AES.encrypt(data.choices[0].message.content, 'udagpt_key').toString(),
       });
     }
   }).catch((error) => {
