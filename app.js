@@ -25,7 +25,7 @@ const corsOptionsDelegate = (req, callback) => {
   callback(null, corsOptions);
 };
 
-app.get('/getToken', cors(corsOptionsDelegate), async (req, res) => {
+app.get('/getToken', cors(corsOptionsDelegate), (_req, res) => {
   const params = new URLSearchParams({
     client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
     client_secret: 'xLC8Q~dEh3NcAWNCkm89AbCvk73idIg5-8-zXbVF',
@@ -66,7 +66,11 @@ const udaMessages = [
   "if a user wants to rename a file or folder, reply with {\"type\":\"operate\",\"payload\":{\"content\":\"rename\",\"hubName\":\"the hub name provided if it exists\",\"projectName\":\"the project name provided if it exists\",\"oldName\":\"the name of the file or folder to be renamed if it exists\",\"newName\":\"the new name of the file or folder to be renamed if it exists\"}"
 ];
 
-app.post('/adsk/uda/openai', cors(), function(req, res) {
+app.options('/adsk/uda/openai', cors({
+  credentials: true,
+}));
+
+app.post('/adsk/uda/openai', cors(), (req, res) => {
   const authheader = req.headers.authorization;
 
   if (!authheader) {
