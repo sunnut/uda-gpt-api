@@ -1,5 +1,8 @@
 const express = require("express");
+const bodyParser = require('body-parser');
 const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 const port = process.env.PORT || 3001;
 
 app.get("/", (_req, res) => res.type('html').send(html));
@@ -15,7 +18,7 @@ app.get('/getToken', async (req, res) => {
   if (!WHITE_LIST.includes(origin)) {
     return res.status(403).send({success: false, error: 'Origin not allowed'});
   }
-  
+
   const params = new URLSearchParams({
     client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
     client_secret: 'xLC8Q~dEh3NcAWNCkm89AbCvk73idIg5-8-zXbVF',
@@ -43,7 +46,70 @@ app.get('/getToken', async (req, res) => {
   });
 });
 
-app.get("/", (req, res) => res.type('html').send(html));
+const udaMessages = [
+  "if a user wants to know basic info or introduction about uda, reply with {\"type\":\"intro\"}",
+  "if a user wants to contact uda, reply with {\"type\":\"contact\"}",
+  "if a user wants to use uda quickly, reply with {\"type\":\"quickstarts\"}",
+  "if a user wants to create uda project, reply with {\"type\":\"cua\"}",
+  "if a user asks for an example of something, reply with {\"type\":\"lowercase of the thing name that removes the 'igation' at the end if it exists\"}",
+  "if a user wants to query or search hub data, reply with {\"type\":\"query\",\"payload\":{\"content\":\"hub\"}}",
+  "if a user wants to query or search project data, reply with {\"type\":\"query\",\"payload\":{\"content\":\"project\",\"hub\":\"the hub name provided if it exists\",\"keyword\":\"the keyword used to search if it exists\"}}",
+  "if a user wants to query or search file or folder data, reply with {\"type\":\"query\",\"payload\":{\"isGranular\":\"(search is granular type ? true : false)\",\"content\":\"fileFolder\",\"range\":\"query or search both 'file' and 'folder' ? all : (only file ? File : Folder)\",\"sortBy\":\"the name sorted by if exists\",\"sortOrder\":\"the expected sort order is descending ? desc : asc if exists\",\"hubName\":\"the hub name provided if it exists\",\"projectName\":\"the project name provided if it exists\",\"folderName\":\"the folder name provided if it exists\",\"keyword\":\"the keyword used to search if it exists\",\"timeRange\":\"is today ? today : days of the time range provided if it exists\",\"fileTypes\":\"The filtered file type array provided if it exists\"}}",
+  "if a user wants to create a folder, reply with {\"type\":\"operate\",\"payload\":{\"content\":\"create\",\"hubName\":\"the hub name provided if it exists\",\"projectName\":\"the project name provided if it exists\",\"folderName\":\"the parent folder name provided if it exists\",\"newName\":\"the name of the folder to be created if it exists\"}",
+  "if a user wants to rename a file or folder, reply with {\"type\":\"operate\",\"payload\":{\"content\":\"rename\",\"hubName\":\"the hub name provided if it exists\",\"projectName\":\"the project name provided if it exists\",\"oldName\":\"the name of the file or folder to be renamed if it exists\",\"newName\":\"the new name of the file or folder to be renamed if it exists\"}"
+];
+
+app.post('/adsk/uda/openai', function(req, res) {
+  const authheader = req.headers.authorization;
+
+  if (!authheader) {
+    return res.status(403).send({success: false, error: 'Unauthorized'});
+  }
+
+  const payload = req.body;
+
+  if (!payload) {
+    return res.status(400).send({success: false, error: 'Bad Request'});
+  }
+
+  const { messages } = payload;
+
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).send({success: false, error: 'Bad messages'});
+  }
+
+  payload.messages = [
+    ...udaMessages.map((msg) => ({
+      role: 'user',
+      content: `Pls note that ${msg}`
+    })),
+    ...messages
+  ];
+
+  fetch(
+    'https://cog-sandbox-dev-westus3-001.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-01',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authheader
+      },
+      body: JSON.stringify(payload)
+    }
+  ).then((response) => response.json())
+  .then((data) => {
+    if (data.error) {
+      return res.send({success: false, error: data.error});
+    } else {
+      res.send({
+        success: true,
+        answer: data.choices[0].message.content
+      });
+    }
+  }).catch((error) => {
+    res.send({success: false, error});
+  });
+});
 
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
