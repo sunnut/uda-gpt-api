@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -7,12 +8,24 @@ const port = process.env.PORT || 3001;
 
 app.get("/", (_req, res) => res.type('html').send(html));
 
-const WHITE_LIST = [
+const allowlist = [
   'http://localhost:8080',
   'https://pages.git.autodesk.com'
 ];
 
-app.get('/getToken', async (req, res) => {
+const corsOptionsDelegate = (req, callback) => {
+  let corsOptions;
+
+  if (allowlist.indexOf(req.headers.origin) !== -1) {
+    corsOptions = { origin: true };
+  } else {
+    corsOptions = { origin: false };
+  }
+
+  callback(null, corsOptions);
+};
+
+app.get('/getToken', cors(corsOptionsDelegate), async (req, res) => {
   const origin = req.headers.origin;
   
   if (!WHITE_LIST.includes(origin)) {
@@ -59,7 +72,7 @@ const udaMessages = [
   "if a user wants to rename a file or folder, reply with {\"type\":\"operate\",\"payload\":{\"content\":\"rename\",\"hubName\":\"the hub name provided if it exists\",\"projectName\":\"the project name provided if it exists\",\"oldName\":\"the name of the file or folder to be renamed if it exists\",\"newName\":\"the new name of the file or folder to be renamed if it exists\"}"
 ];
 
-app.post('/adsk/uda/openai', function(req, res) {
+app.post('/adsk/uda/openai', cors(), function(req, res) {
   const authheader = req.headers.authorization;
 
   if (!authheader) {
