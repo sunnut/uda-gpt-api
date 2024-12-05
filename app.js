@@ -70,7 +70,7 @@ app.options('/adsk/uda/openai', cors({
   credentials: true,
 }));
 
-app.post('/adsk/uda/openai', (req, res) => {
+app.post('/adsk/uda/openai', cors(), (req, res) => {
   const authheader = req.headers.authorization;
 
   if (!authheader) {
