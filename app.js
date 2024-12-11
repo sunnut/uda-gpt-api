@@ -15,9 +15,9 @@ const allowlist = [
 ];
 
 app.get('/getToken', cors(), (req, res) => {
-  if (!allowlist.includes(req.headers.origin)) {
-    return res.status(403).send({success: false, error: 'Unauthorized domain'});
-  }
+  // if (!allowlist.includes(req.headers.origin)) {
+  //   return res.status(403).send({success: false, error: 'Unauthorized domain'});
+  // }
 
   const params = new URLSearchParams({
     client_id: '6ca76ff0-854d-4e2f-afaa-95372097eb88',
